@@ -1,0 +1,31 @@
+# Python virtual environment and cache
+backend/.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Runtime data and logs
+backend/uploads/
+backend/data/*.db
+*.log
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+
+# Large model files - download separately from Google Drive
+backend/models/*.keras
+backend/models/*.h5
+backend/models/*.tflite
+
+# Local archives/backups
+*.zip
+*.rar
+*.7z
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
