@@ -448,6 +448,12 @@ For restart instructions, read:
 docs/stop_and_resume_guide.md
 ```
 
+For laptop camera capture planning, read:
+
+```text
+docs/step8_laptop_camera_capture_guide.md
+```
+
 ## One-Minute Explanation
 
 This is a remote skin disease screening web application. The frontend is built with React and Vite. The backend is built with FastAPI in Python. Patients can register, log in, upload a skin image, and enter symptoms. The backend saves the image, preprocesses it to 300x300 RGB, and sends it to a TensorFlow/Keras EfficientNetV2B3 model trained on six SkinDisNet classes. The result includes predicted disease, confidence, top-3 predictions, risk level, medicine guidance, and voice report text. The case is stored in SQLite. Doctors can log in separately, view submitted cases, inspect images and AI results, and save review notes. The system is designed as a doctor-supported screening tool, not a replacement for medical diagnosis.
