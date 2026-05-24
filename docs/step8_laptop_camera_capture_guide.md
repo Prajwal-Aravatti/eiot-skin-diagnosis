@@ -1,6 +1,6 @@
 # Step 8 Guide: Laptop Camera Image Capture
 
-This step documents the plan for adding real camera input to the EIOT skin disease screening project.
+This step documents the laptop camera input added to the EIOT skin disease screening project.
 
 Current project already supports:
 
@@ -15,11 +15,11 @@ Doctor dashboard review
 Voice report
 ```
 
-Now we want to improve the patient image input. Since this is an EIOT project, the system should feel closer to real-world sensing/capture. For the current local version, we will use the laptop webcam to capture a skin image. Later, after hosting, we can extend this to mobile camera usage.
+The patient image input now supports both existing image upload and laptop webcam capture. Since this is an EIOT project, this makes the system closer to real-world sensing/capture. For the current local version, we use the laptop webcam to capture a skin image. Later, after hosting, we can extend this to mobile camera usage.
 
 ## Goal Of This Step
 
-Add a laptop camera capture option in the Patient App.
+Use a laptop camera capture option in the Patient App.
 
 The patient should be able to:
 
@@ -216,11 +216,11 @@ Our backend already expects image as UploadFile.
 So the captured camera photo must become a File object before adding it to FormData.
 ```
 
-## Files We Will Modify
+## Files Modified
 
 ### 1. frontend/src/main.jsx
 
-Add:
+Added:
 
 ```text
 camera state
@@ -249,7 +249,7 @@ The captured camera image will be stored in form.image, same as uploaded file.
 
 ### 2. frontend/src/styles.css
 
-Add styles for:
+Added styles for:
 
 ```text
 camera panel
@@ -261,19 +261,15 @@ mobile responsive camera layout
 
 ### 3. README.md
 
-Add a short note:
+Added a short note:
 
 ```text
 Patient can either upload a skin image or capture one using laptop camera.
 ```
 
-### 4. docs/current_progress_explanation.md
+### 4. docs/step8_laptop_camera_capture_guide.md
 
-Optional update after implementation:
-
-```text
-Mention laptop camera capture as completed.
-```
+This file documents the implementation and test process.
 
 ## Files We Do Not Need To Modify
 
@@ -353,7 +349,7 @@ Retake Photo
 Upload Skin Image
 ```
 
-## Implementation Steps
+## Implementation Summary
 
 ### Step 1: Add React Imports
 

@@ -32,6 +32,7 @@ Final diagnosis and medicine/prescription must be approved by a doctor.
 - Token-based authentication
 - Role-based route protection
 - Image upload storage
+- Laptop camera capture for patient images
 - TensorFlow/Keras model integration
 - Dummy prediction fallback if model is missing
 - Doctor dashboard
@@ -327,7 +328,7 @@ Only the backend server is required for normal use because the React frontend is
 1. Open the app.
 2. Create or log in to a patient account.
 3. Fill patient details.
-4. Upload a JPG/PNG skin image.
+4. Upload a JPG/PNG skin image or capture one using the laptop camera.
 5. Submit the case.
 6. View disease prediction, confidence, risk level, medicine guidance, and top-3 predictions.
 7. Click `Play Voice Report` to hear the result.
@@ -448,7 +449,7 @@ For restart instructions, read:
 docs/stop_and_resume_guide.md
 ```
 
-For laptop camera capture planning, read:
+For laptop camera capture details, read:
 
 ```text
 docs/step8_laptop_camera_capture_guide.md

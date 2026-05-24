@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Activity,
@@ -57,6 +57,9 @@ function modelStatusText(status) {
 }
 
 function App() {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const cameraStreamRef = useRef(null);
   const savedSession = useMemo(() => {
     const rawSession = localStorage.getItem("eiot_session");
     return rawSession ? JSON.parse(rawSession) : null;
@@ -79,6 +82,9 @@ function App() {
   const [isLoadingCases, setIsLoadingCases] = useState(false);
   const [reviewDrafts, setReviewDrafts] = useState({});
   const [updatingCaseId, setUpdatingCaseId] = useState(null);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [cameraError, setCameraError] = useState("");
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const imagePreview = useMemo(() => {
     if (!form.image) {
@@ -86,6 +92,18 @@ function App() {
     }
     return URL.createObjectURL(form.image);
   }, [form.image]);
+
+  useEffect(() => {
+    if (videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream]);
+
+  useEffect(() => {
+    return () => {
+      stopCamera(false);
+    };
+  }, []);
 
   function updateField(name, value) {
     setForm((current) => ({ ...current, [name]: value }));
@@ -99,6 +117,97 @@ function App() {
     return {
       Authorization: `Bearer ${tokenOverride || session?.token}`,
     };
+  }
+
+  async function startCamera() {
+    setCameraError("");
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError("Camera is not supported in this browser.");
+      return;
+    }
+
+    try {
+      if (cameraStreamRef.current) {
+        stopCamera();
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment",
+        },
+        audio: false,
+      });
+      cameraStreamRef.current = stream;
+      setCameraStream(stream);
+      setIsCameraOpen(true);
+    } catch (requestError) {
+      setCameraError(
+        requestError.message ||
+          "Unable to access camera. Please allow camera permission in the browser.",
+      );
+    }
+  }
+
+  function stopCamera(updateState = true) {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    if (updateState) {
+      setCameraStream(null);
+      setIsCameraOpen(false);
+    }
+  }
+
+  function capturePhoto() {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas) {
+      setCameraError("Camera preview is not ready yet.");
+      return;
+    }
+
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, width, height);
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          setCameraError("Unable to capture image. Please try again.");
+          return;
+        }
+
+        const capturedFile = new File([blob], `camera-capture-${Date.now()}.jpg`, {
+          type: "image/jpeg",
+        });
+        updateField("image", capturedFile);
+        setCameraError("");
+        stopCamera();
+      },
+      "image/jpeg",
+      0.92,
+    );
+  }
+
+  function handleImageUpload(file) {
+    if (!file) {
+      return;
+    }
+    stopCamera();
+    setCameraError("");
+    updateField("image", file);
   }
 
   async function submitAuth(event) {
@@ -557,10 +666,9 @@ function App() {
 
           <label className="upload-box">
             <input
-              required
               type="file"
               accept="image/png,image/jpeg"
-              onChange={(event) => updateField("image", event.target.files[0])}
+              onChange={(event) => handleImageUpload(event.target.files[0])}
             />
             <span>
               <Upload size={20} />
@@ -568,6 +676,50 @@ function App() {
             </span>
             <small>{form.image ? form.image.name : "JPG or PNG image"}</small>
           </label>
+
+          <div className="camera-panel">
+            <div className="camera-panel-header">
+              <Camera size={20} />
+              <strong>Laptop Camera</strong>
+            </div>
+
+            {isCameraOpen ? (
+              <>
+                <video
+                  ref={videoRef}
+                  className="camera-preview"
+                  autoPlay
+                  muted
+                  playsInline
+                />
+                <div className="camera-actions">
+                  <button className="camera-button primary" type="button" onClick={capturePhoto}>
+                    <Camera size={18} />
+                    Capture Photo
+                  </button>
+                  <button className="camera-button" type="button" onClick={stopCamera}>
+                    <VolumeX size={18} />
+                    Stop Camera
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button className="camera-button primary" type="button" onClick={startCamera}>
+                <Camera size={18} />
+                Start Camera
+              </button>
+            )}
+
+            {form.image && (
+              <button className="camera-button" type="button" onClick={startCamera}>
+                <RefreshCw size={18} />
+                Retake With Camera
+              </button>
+            )}
+
+            {cameraError && <p className="error-message">{cameraError}</p>}
+            <canvas ref={canvasRef} className="hidden-canvas" />
+          </div>
 
           {error && <p className="error-message">{error}</p>}
 
