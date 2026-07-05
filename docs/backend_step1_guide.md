@@ -1,6 +1,6 @@
 # Step 1 Guide: Backend Skeleton
 
-This step creates the central server for the EIOT project.
+This step creates the central server for the AI skin diagnosis project.
 
 The backend will receive patient data, save the uploaded skin image, call the AI prediction function, calculate risk level, save the case, and return the result to the patient app.
 
@@ -34,13 +34,13 @@ At least one of them should show a Python version.
 Your project is here:
 
 ```text
-C:\Users\Hp\5 th Sem\EIOT
+<project-root>
 ```
 
 The backend is here:
 
 ```text
-C:\Users\Hp\5 th Sem\EIOT\backend
+<project-root>\backend
 ```
 
 ## Backend Setup Commands
@@ -48,7 +48,7 @@ C:\Users\Hp\5 th Sem\EIOT\backend
 Run these in PowerShell:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -183,4 +183,6 @@ Tinea Corporis
 ```
 
 The model should output probabilities for these classes.
+
+
 

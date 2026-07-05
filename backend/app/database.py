@@ -62,6 +62,7 @@ def init_db() -> None:
                 model_status TEXT,
                 doctor_status TEXT NOT NULL DEFAULT 'Pending',
                 doctor_notes TEXT,
+                telegram_chat_id TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
@@ -74,6 +75,7 @@ def init_db() -> None:
         _ensure_column(connection, "cases", "medicine_guidance", "TEXT")
         _ensure_column(connection, "cases", "voice_text", "TEXT")
         _ensure_column(connection, "cases", "model_status", "TEXT")
+        _ensure_column(connection, "cases", "telegram_chat_id", "TEXT")
 
 
 def _ensure_column(connection: sqlite3.Connection, table_name: str, column_name: str, column_type: str) -> None:
@@ -247,6 +249,21 @@ def update_case_review(case_id: int, doctor_status: str, doctor_notes: str | Non
             """,
             (doctor_status, doctor_notes, case_id),
         )
+    return get_case(case_id)
+
+
+def link_case_to_telegram_chat(case_id: int, user_id: int, telegram_chat_id: str) -> dict[str, Any] | None:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE cases
+            SET telegram_chat_id = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (telegram_chat_id, case_id, user_id),
+        )
+        if cursor.rowcount == 0:
+            return None
     return get_case(case_id)
 
 

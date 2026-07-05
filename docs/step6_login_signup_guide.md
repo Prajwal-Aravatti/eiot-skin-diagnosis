@@ -254,7 +254,7 @@ Added styling for auth pages and account bar.
 Restart backend:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
@@ -315,5 +315,7 @@ audit logs
 stronger deployment security
 ```
 
-But for your EIOT academic project, this is a strong and realistic implementation.
+But for your AI skin diagnosis academic project, this is a strong and realistic implementation.
+
+
 

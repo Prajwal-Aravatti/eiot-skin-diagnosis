@@ -1,9 +1,11 @@
 from sqlite3 import IntegrityError
+import os
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+import requests
 
 from app.config import APP_NAME, FRONTEND_ASSETS_DIR, FRONTEND_DIST_DIR, UPLOAD_DIR
 from app.database import (
@@ -15,11 +17,20 @@ from app.database import (
     get_user_by_email,
     get_user_by_token,
     init_db,
+    link_case_to_telegram_chat,
     list_cases,
     list_cases_for_user,
     update_case_review,
 )
-from app.schemas import AuthResponse, CaseResponse, ReviewRequest, UserCreate, UserLogin, UserResponse
+from app.schemas import (
+    AuthResponse,
+    CaseResponse,
+    ReviewRequest,
+    TelegramCaseLinkRequest,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+)
 from app.services.auth import create_auth_token, hash_password, verify_password
 from app.services.prediction import predict_skin_disease
 from app.services.recommendations import build_backend_result
@@ -37,7 +48,6 @@ app.add_middleware(
 )
 
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
 
 @app.on_event("startup")
 def on_startup() -> None:
@@ -77,10 +87,37 @@ def require_doctor(user: dict = Depends(get_current_user)) -> dict:
     return user
 
 
+def send_telegram_review_notification(case: dict) -> None:
+    telegram_chat_id = case.get("telegram_chat_id")
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    if not telegram_chat_id or not bot_token:
+        return
+
+    doctor_notes = case.get("doctor_notes") or "No extra doctor notes were added."
+    message = (
+        "Doctor review updated.\n\n"
+        f"Case ID: {case['id']}\n"
+        f"Patient: {case['patient_name']}\n"
+        f"Disease: {case.get('disease') or case.get('predicted_disease')}\n"
+        f"Doctor status: {case['doctor_status']}\n"
+        f"Doctor says: {doctor_notes}\n\n"
+        "Open the web app history page to see the full case."
+    )
+
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            json={"chat_id": telegram_chat_id, "text": message},
+            timeout=20,
+        )
+    except requests.RequestException:
+        pass
+
+
 @app.get("/")
 def health_check() -> dict:
     return {
-        "message": "EIOT Skin Diagnosis API is running",
+        "message": "AI Skin Diagnosis API is running",
         "docs": "/docs",
     }
 
@@ -218,6 +255,22 @@ def get_case_by_id(case_id: int, user: dict = Depends(get_current_user)) -> dict
     return case
 
 
+@app.post("/telegram/cases/{case_id}/link")
+def link_telegram_case(
+    case_id: int,
+    link_request: TelegramCaseLinkRequest,
+    user: dict = Depends(require_patient),
+) -> dict:
+    case = link_case_to_telegram_chat(
+        case_id=case_id,
+        user_id=user["id"],
+        telegram_chat_id=link_request.chat_id,
+    )
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found for this patient")
+    return {"message": "Telegram chat linked to case", "case_id": case_id}
+
+
 @app.post("/cases/{case_id}/review", response_model=CaseResponse)
 def review_case(case_id: int, review: ReviewRequest, user: dict = Depends(require_doctor)) -> dict:
     case = update_case_review(
@@ -227,4 +280,5 @@ def review_case(case_id: int, review: ReviewRequest, user: dict = Depends(requir
     )
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    send_telegram_review_notification(case)
     return case

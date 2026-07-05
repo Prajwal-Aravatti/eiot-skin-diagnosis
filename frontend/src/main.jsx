@@ -5,6 +5,7 @@ import {
   Camera,
   ClipboardCheck,
   ClipboardList,
+  History,
   FileImage,
   LogIn,
   LogOut,
@@ -21,7 +22,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = window.location.origin;
 
 const initialForm = {
   patient_name: "",
@@ -56,12 +57,77 @@ function modelStatusText(status) {
   return "Model status unavailable";
 }
 
+function medicineExamplesText(medicineGuidance) {
+  if (!medicineGuidance?.examples?.length) {
+    return "Not available";
+  }
+  return medicineGuidance.examples.join(", ");
+}
+
+function isReviewedCase(caseItem) {
+  return caseItem.doctor_status !== "Pending";
+}
+
+function doctorApprovalText(status) {
+  if (status === "Reviewed") {
+    return "Reviewed / Approved";
+  }
+  if (status === "Pending") {
+    return "Waiting for doctor";
+  }
+  return status;
+}
+
+function reviewTone(status) {
+  if (status === "Reviewed") {
+    return "good";
+  }
+  if (status === "Urgent Follow-up" || status === "Needs Consultation") {
+    return "danger";
+  }
+  return "warning";
+}
+
+function severityTone(riskLevel) {
+  const risk = String(riskLevel || "").toLowerCase();
+  if (risk.includes("high") || risk.includes("doctor")) {
+    return "danger";
+  }
+  if (risk.includes("medium")) {
+    return "warning";
+  }
+  return "good";
+}
+
+async function getPreferredCameraConstraints() {
+  const permissionStream = await navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: false,
+  });
+  permissionStream.getTracks().forEach((track) => track.stop());
+
+  if (!navigator.mediaDevices?.enumerateDevices) {
+    return {
+      constraints: { facingMode: "environment" },
+      cameraName: "Default camera",
+    };
+  }
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const videoDevices = devices.filter((device) => device.kind === "videoinput");
+
+  return {
+    constraints: { facingMode: "environment" },
+    cameraName: videoDevices[0]?.label || "Default camera",
+  };
+}
+
 function App() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const cameraStreamRef = useRef(null);
   const savedSession = useMemo(() => {
-    const rawSession = localStorage.getItem("eiot_session");
+    const rawSession = localStorage.getItem("skin_diagnosis_session");
     return rawSession ? JSON.parse(rawSession) : null;
   }, []);
 
@@ -80,11 +146,13 @@ function App() {
   const [cases, setCases] = useState([]);
   const [casesError, setCasesError] = useState("");
   const [isLoadingCases, setIsLoadingCases] = useState(false);
+  const [activeHistorySection, setActiveHistorySection] = useState("needs-review");
   const [reviewDrafts, setReviewDrafts] = useState({});
   const [updatingCaseId, setUpdatingCaseId] = useState(null);
   const [cameraStream, setCameraStream] = useState(null);
   const [cameraError, setCameraError] = useState("");
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [activeCameraName, setActiveCameraName] = useState("");
 
   const imagePreview = useMemo(() => {
     if (!form.image) {
@@ -132,19 +200,19 @@ function App() {
         stopCamera();
       }
 
+      const preferredCamera = await getPreferredCameraConstraints();
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-        },
+        video: preferredCamera.constraints,
         audio: false,
       });
       cameraStreamRef.current = stream;
       setCameraStream(stream);
       setIsCameraOpen(true);
+      setActiveCameraName(preferredCamera.cameraName);
     } catch (requestError) {
       setCameraError(
         requestError.message ||
-          "Unable to access camera. Please allow camera permission in the browser.",
+          "Unable to access the camera. Check that a webcam is connected and browser permission is allowed.",
       );
     }
   }
@@ -162,6 +230,7 @@ function App() {
     if (updateState) {
       setCameraStream(null);
       setIsCameraOpen(false);
+      setActiveCameraName("");
     }
   }
 
@@ -236,7 +305,7 @@ function App() {
       }
 
       const data = await response.json();
-      localStorage.setItem("eiot_session", JSON.stringify(data));
+      localStorage.setItem("skin_diagnosis_session", JSON.stringify(data));
       setSession(data);
       setForm((current) => ({
         ...current,
@@ -262,7 +331,7 @@ function App() {
       }).catch(() => {});
     }
 
-    localStorage.removeItem("eiot_session");
+    localStorage.removeItem("skin_diagnosis_session");
     setSession(null);
     setResult(null);
     setCases([]);
@@ -337,6 +406,271 @@ function App() {
   function openDoctorView() {
     setActiveView("doctor");
     loadCases();
+  }
+
+  async function loadHistory(view, tokenOverride) {
+    setCasesError("");
+    setIsLoadingCases(true);
+    setActiveView(view);
+
+    const endpoint = view === "patient-history" ? "/my-cases" : "/cases";
+
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: authHeaders(tokenOverride),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to load case history from backend.");
+      }
+
+      const data = await response.json();
+      setCases(data);
+    } catch (requestError) {
+      setCasesError(
+        requestError.message ||
+          "Could not connect to backend. Make sure FastAPI is running.",
+      );
+    } finally {
+      setIsLoadingCases(false);
+    }
+  }
+
+  function renderCaseDetails(caseItem, options = {}) {
+    const showPatientOwner = options.showPatientOwner ?? true;
+    const showHighlights = options.showHighlights ?? false;
+    const approvalTone = reviewTone(caseItem.doctor_status);
+    const caseSeverityTone = severityTone(caseItem.risk_level);
+
+    return (
+      <>
+        {showHighlights && (
+          <div className="case-highlight-row">
+            <div className={`case-highlight highlight-${approvalTone}`}>
+              <strong>Doctor Approval</strong>
+              <span>{doctorApprovalText(caseItem.doctor_status)}</span>
+            </div>
+            <div className={`case-highlight highlight-${caseSeverityTone}`}>
+              <strong>Severity</strong>
+              <span>{caseItem.risk_level}</span>
+            </div>
+            <div className={`case-highlight highlight-${approvalTone}`}>
+              <strong>Doctor Words</strong>
+              <span>{caseItem.doctor_notes || "Doctor review is pending."}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="case-grid">
+          {showPatientOwner && (
+            <div>
+              <strong>Patient</strong>
+              <span>{caseItem.patient_name}, {caseItem.age}, {caseItem.gender}</span>
+            </div>
+          )}
+          <div>
+            <strong>Location</strong>
+            <span>{caseItem.body_location}</span>
+          </div>
+          <div>
+            <strong>Itching</strong>
+            <span>{caseItem.itch}</span>
+          </div>
+          <div>
+            <strong>Pain</strong>
+            <span>{caseItem.pain}</span>
+          </div>
+          <div>
+            <strong>Case ID</strong>
+            <span>#{caseItem.id}</span>
+          </div>
+          <div>
+            <strong>Date</strong>
+            <span>{caseItem.created_at}</span>
+          </div>
+        </div>
+
+        <p className="symptom-text">
+          <strong>Symptoms:</strong> {caseItem.symptoms || "No extra symptoms entered"}
+        </p>
+
+        {caseItem.doctor_reason && (
+          <p className="medical-warning">{caseItem.doctor_reason}</p>
+        )}
+
+        {caseItem.medicine_guidance && (
+          <div className="medicine-panel compact">
+            <h4>Medicine Guidance</h4>
+            <p><strong>Category:</strong> {caseItem.medicine_guidance.category}</p>
+            <p>{caseItem.medicine_guidance.instruction}</p>
+            <small className="medicine-examples">
+              Examples: {medicineExamplesText(caseItem.medicine_guidance)}
+            </small>
+            <small>Final medicine or prescription should be verified by a doctor.</small>
+          </div>
+        )}
+
+        {caseItem.top_3_predictions?.length > 0 && (
+          <div className="top-predictions compact">
+            <h4>Confidence Scores</h4>
+            {caseItem.top_3_predictions.map((item) => (
+              <div className="prediction-row" key={`${caseItem.id}-${item.disease}`}>
+                <span>{item.disease}</span>
+                <strong>{confidencePercent(item.confidence).toFixed(1)}%</strong>
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  function renderHistoryPage(role) {
+    const isPatientHistory = role === "patient";
+    const title = isPatientHistory ? "Patient Case History" : "Doctor Case History";
+    const emptyTitle = isPatientHistory ? "No submitted cases yet" : "No case history yet";
+    const emptyText = isPatientHistory
+      ? "Submit a skin screening case first, then open history again."
+      : "Patient submissions will appear here after they are created.";
+    const needsReviewCases = cases.filter((caseItem) => !isReviewedCase(caseItem));
+    const reviewedCases = cases.filter((caseItem) => isReviewedCase(caseItem));
+    const historySections = {
+      "needs-review": {
+        title: "Needs Doctor Review",
+        text: isPatientHistory
+          ? "Cases waiting for the doctor approval and notes."
+          : "New cases that still need doctor approval and notes.",
+        cases: needsReviewCases,
+        emptyMessage: "No cases are waiting for review.",
+        tone: "warning",
+      },
+      reviewed: {
+        title: "Reviewed Cases",
+        text: isPatientHistory
+          ? "Cases where the doctor has responded with status or advice."
+          : "Cases where a doctor status has already been saved.",
+        cases: reviewedCases,
+        emptyMessage: "No reviewed cases yet.",
+        tone: "good",
+      },
+    };
+    const selectedHistorySection = historySections[activeHistorySection];
+
+    function renderHistoryCard(caseItem) {
+      return (
+        <article className={`history-card history-card-${severityTone(caseItem.risk_level)}`} key={caseItem.id}>
+          <div className="history-image-wrap">
+            <img
+              className="case-image"
+              src={`${API_BASE_URL}${caseItem.image_path}`}
+              alt={`Skin case ${caseItem.id}`}
+            />
+          </div>
+
+          <div className="case-content">
+            <h3>{caseItem.disease || caseItem.predicted_disease}</h3>
+            <p className="confidence">{confidencePercent(caseItem.confidence).toFixed(1)}% confidence</p>
+            <span className={`model-status model-${caseItem.model_status || "unknown"}`}>
+              {modelStatusText(caseItem.model_status)}
+            </span>
+
+            {renderCaseDetails(caseItem, {
+              showHighlights: true,
+              showPatientOwner: true,
+            })}
+          </div>
+        </article>
+      );
+    }
+
+    function renderHistorySection(sectionTitle, sectionText, sectionCases, emptyMessage, sectionTone) {
+      return (
+        <section className={`history-section history-section-${sectionTone}`}>
+          <div className="history-section-header">
+            <div>
+              <h3>{sectionTitle}</h3>
+              <p>{sectionText}</p>
+            </div>
+            <span>{sectionCases.length}</span>
+          </div>
+
+          {sectionCases.length === 0 ? (
+            <div className="history-section-empty">{emptyMessage}</div>
+          ) : (
+            <div className="history-list">
+              {sectionCases.map((caseItem) => renderHistoryCard(caseItem))}
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    return (
+      <section className="history-page">
+        <div className="dashboard-header">
+          <div className="section-title">
+            <History size={22} />
+            <h2>{title}</h2>
+          </div>
+          <div className="history-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setActiveView(isPatientHistory ? "patient" : "doctor")}
+            >
+              Back
+            </button>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => loadHistory(isPatientHistory ? "patient-history" : "doctor-history")}
+            >
+              {isLoadingCases ? <Loader2 className="spin" size={18} /> : <RefreshCw size={18} />}
+              Refresh History
+            </button>
+          </div>
+        </div>
+
+        {casesError && <p className="error-message">{casesError}</p>}
+
+        {cases.length === 0 && !isLoadingCases ? (
+          <div className="empty-state">
+            <History size={44} />
+            <h3>{emptyTitle}</h3>
+            <p>{emptyText}</p>
+          </div>
+        ) : (
+          <div className="history-sections">
+            <div className="history-section-tabs" aria-label="Case history sections">
+              <button
+                className={activeHistorySection === "needs-review" ? "active warning" : "warning"}
+                type="button"
+                onClick={() => setActiveHistorySection("needs-review")}
+              >
+                Needs Doctor Review
+                <span>{needsReviewCases.length}</span>
+              </button>
+              <button
+                className={activeHistorySection === "reviewed" ? "active good" : "good"}
+                type="button"
+                onClick={() => setActiveHistorySection("reviewed")}
+              >
+                Reviewed Cases
+                <span>{reviewedCases.length}</span>
+              </button>
+            </div>
+
+            {renderHistorySection(
+              selectedHistorySection.title,
+              selectedHistorySection.text,
+              selectedHistorySection.cases,
+              selectedHistorySection.emptyMessage,
+              selectedHistorySection.tone,
+            )}
+          </div>
+        )}
+      </section>
+    );
   }
 
   function updateReviewDraft(caseId, field, value) {
@@ -418,11 +752,11 @@ function App() {
     <main className="app-shell">
       <section className="intro-panel">
         <div>
-          <p className="eyebrow">Embedded Systems and IoT</p>
-          <h1>Smart Remote Skin Disease Screening</h1>
+          <p className="eyebrow">AI / ML Computer Vision</p>
+          <h1>AI Skin Disease Screening</h1>
           <p className="intro-copy">
-            Patient image and symptom data are sent to the backend, where the AI
-            prediction module will be connected after training.
+            Patient image and symptom data are analyzed by a trained skin-disease
+            classification model, then routed to a doctor for review.
           </p>
         </div>
         <div className="status-strip" aria-label="Project status">
@@ -553,24 +887,50 @@ function App() {
 
       <nav className="view-switcher" aria-label="Application views">
         {session.user.role === "patient" && (
-        <button
-          className={activeView === "patient" ? "active" : ""}
-          type="button"
-          onClick={() => setActiveView("patient")}
-        >
-          <UserRound size={18} />
-          Patient App
-        </button>
+        <>
+          <button
+            className={activeView === "patient" ? "active" : ""}
+            type="button"
+            onClick={() => setActiveView("patient")}
+          >
+            <UserRound size={18} />
+            Patient App
+          </button>
+          <button
+            className={activeView === "patient-history" ? "active" : ""}
+            type="button"
+            onClick={() => {
+              setActiveHistorySection("needs-review");
+              loadHistory("patient-history");
+            }}
+          >
+            <History size={18} />
+            Show History
+          </button>
+        </>
         )}
         {session.user.role === "doctor" && (
-        <button
-          className={activeView === "doctor" ? "active" : ""}
-          type="button"
-          onClick={openDoctorView}
-        >
-          <Stethoscope size={18} />
-          Doctor Dashboard
-        </button>
+        <>
+          <button
+            className={activeView === "doctor" ? "active" : ""}
+            type="button"
+            onClick={openDoctorView}
+          >
+            <Stethoscope size={18} />
+            Doctor Dashboard
+          </button>
+          <button
+            className={activeView === "doctor-history" ? "active" : ""}
+            type="button"
+            onClick={() => {
+              setActiveHistorySection("needs-review");
+              loadHistory("doctor-history");
+            }}
+          >
+            <History size={18} />
+            Show History
+          </button>
+        </>
         )}
       </nav>
 
@@ -680,8 +1040,13 @@ function App() {
           <div className="camera-panel">
             <div className="camera-panel-header">
               <Camera size={20} />
-              <strong>Laptop Camera</strong>
+              <strong>Camera Capture</strong>
             </div>
+            <p className="camera-device-status">
+              {activeCameraName
+                ? `Using ${activeCameraName}`
+                : "Use the laptop camera or any connected webcam."}
+            </p>
 
             {isCameraOpen ? (
               <>
@@ -736,7 +1101,9 @@ function App() {
           </div>
 
           {imagePreview ? (
-            <img className="preview-image" src={imagePreview} alt="Selected skin area" />
+            <div className="image-preview-wrap">
+              <img className="preview-image" src={imagePreview} alt="Selected skin area" />
+            </div>
           ) : (
             <div className="empty-preview">
               <FileImage size={42} />
@@ -806,6 +1173,10 @@ function App() {
           )}
         </aside>
       </section>
+      ) : activeView === "patient-history" && session.user.role === "patient" ? (
+        renderHistoryPage("patient")
+      ) : activeView === "doctor-history" && session.user.role === "doctor" ? (
+        renderHistoryPage("doctor")
       ) : (
         <section className="doctor-dashboard">
           <div className="dashboard-header">
@@ -857,49 +1228,7 @@ function App() {
                         {modelStatusText(caseItem.model_status)}
                       </span>
 
-                      <div className="case-grid">
-                        <div>
-                          <strong>Patient</strong>
-                          <span>{caseItem.patient_name}, {caseItem.age}, {caseItem.gender}</span>
-                        </div>
-                        <div>
-                          <strong>Location</strong>
-                          <span>{caseItem.body_location}</span>
-                        </div>
-                        <div>
-                          <strong>Itching</strong>
-                          <span>{caseItem.itch}</span>
-                        </div>
-                        <div>
-                          <strong>Pain</strong>
-                          <span>{caseItem.pain}</span>
-                        </div>
-                      </div>
-
-                      <p className="symptom-text">
-                        <strong>Symptoms:</strong> {caseItem.symptoms || "No extra symptoms entered"}
-                      </p>
-
-                      <p className="recommendation-text">{caseItem.recommendation}</p>
-                      {caseItem.medicine_guidance && (
-                        <div className="medicine-panel compact">
-                          <h4>Medicine Guidance</h4>
-                          <p><strong>Category:</strong> {caseItem.medicine_guidance.category}</p>
-                          <p><strong>Examples:</strong> {caseItem.medicine_guidance.examples.join(", ")}</p>
-                          <p>{caseItem.medicine_guidance.instruction}</p>
-                        </div>
-                      )}
-                      {caseItem.top_3_predictions?.length > 0 && (
-                        <div className="top-predictions compact">
-                          <h4>Top 3 Predictions</h4>
-                          {caseItem.top_3_predictions.map((item) => (
-                            <div className="prediction-row" key={item.disease}>
-                              <span>{item.disease}</span>
-                              <strong>{confidencePercent(item.confidence).toFixed(1)}%</strong>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {renderCaseDetails(caseItem)}
 
                       <div className="review-box">
                         <label>

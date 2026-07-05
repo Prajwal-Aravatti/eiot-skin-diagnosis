@@ -1,6 +1,6 @@
 # Step 8 Guide: Laptop Camera Image Capture
 
-This step documents the laptop camera input added to the EIOT skin disease screening project.
+This step documents the laptop camera input added to the AI skin disease screening project.
 
 Current project already supports:
 
@@ -15,7 +15,7 @@ Doctor dashboard review
 Voice report
 ```
 
-The patient image input now supports both existing image upload and laptop webcam capture. Since this is an EIOT project, this makes the system closer to real-world sensing/capture. For the current local version, we use the laptop webcam to capture a skin image. Later, after hosting, we can extend this to mobile camera usage.
+The patient image input now supports both existing image upload and laptop webcam capture. Since this is an AI skin diagnosis project, this makes the system closer to real-world sensing/capture. For the current local version, we use the laptop webcam to capture a skin image. Later, after hosting, we can extend this to mobile camera usage.
 
 ## Goal Of This Step
 
@@ -40,9 +40,9 @@ The captured camera image will be converted into a normal image File object.
 Then it will be sent through the existing POST /predict API exactly like uploaded images.
 ```
 
-## Why This Fits EIOT
+## Why Camera Capture Fits
 
-EIOT means Embedded Systems and Internet of Things.
+Camera capture supports the project by letting patients create image input directly in the browser.
 
 In this project, the camera acts as the sensing/input device.
 
@@ -62,7 +62,7 @@ Future input after hosting:
 
 ```text
 Mobile phone camera capture
-IoT camera module capture
+mobile camera capture
 Remote health kiosk camera
 ```
 
@@ -472,7 +472,7 @@ This releases the laptop camera and turns off the webcam indicator.
 After editing frontend:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\frontend"
+cd "<project-root>\frontend"
 npm.cmd run build
 ```
 
@@ -481,7 +481,7 @@ npm.cmd run build
 Start backend:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
@@ -628,6 +628,8 @@ Camera stops properly after use
 Use this answer:
 
 ```text
-Earlier our system accepted skin images only through file upload. Since this is an EIOT project, we planned a live sensing input using the laptop camera. The frontend will use the browser MediaDevices API to access the webcam, show a live video preview, capture one frame using canvas, convert that frame into a File object, and send it to the existing FastAPI /predict endpoint through FormData. The backend does not need changes because it already accepts image files. Later, after hosting with HTTPS, the same camera flow can work on mobile phones using the rear camera.
+Earlier our system accepted skin images only through file upload. Since this is an AI skin diagnosis project, we planned a live sensing input using the laptop camera. The frontend will use the browser MediaDevices API to access the webcam, show a live video preview, capture one frame using canvas, convert that frame into a File object, and send it to the existing FastAPI /predict endpoint through FormData. The backend does not need changes because it already accepts image files. Later, after hosting with HTTPS, the same camera flow can work on mobile phones using the rear camera.
 ```
+
+
 

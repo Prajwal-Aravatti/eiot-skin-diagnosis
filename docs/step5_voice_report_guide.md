@@ -97,7 +97,7 @@ Browser reads report aloud
 1. Start backend:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
@@ -159,4 +159,6 @@ result card shows Play Voice Report
 voice reads the report aloud
 Stop button cancels speech
 ```
+
+
 

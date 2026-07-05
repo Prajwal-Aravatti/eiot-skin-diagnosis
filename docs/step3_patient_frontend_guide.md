@@ -9,7 +9,7 @@ The patient app collects patient details, accepts a skin image upload, sends the
 New folder:
 
 ```text
-C:\Users\Hp\5 th Sem\EIOT\frontend
+<project-root>\frontend
 ```
 
 Important files:
@@ -86,7 +86,7 @@ npm run build
 If you edit frontend code, run:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\frontend"
+cd "<project-root>\frontend"
 npm.cmd run build
 ```
 
@@ -101,7 +101,7 @@ frontend/dist/index.html
 Make sure backend is running first:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
@@ -191,3 +191,5 @@ Submit calls backend
 Result appears in frontend
 Case appears in GET /cases
 ```
+
+

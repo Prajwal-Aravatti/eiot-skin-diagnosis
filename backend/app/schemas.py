@@ -83,3 +83,7 @@ class CaseResponse(BaseModel):
 class ReviewRequest(BaseModel):
     doctor_status: str
     doctor_notes: str | None = None
+
+
+class TelegramCaseLinkRequest(BaseModel):
+    chat_id: str

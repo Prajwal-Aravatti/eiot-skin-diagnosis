@@ -71,8 +71,8 @@ labels.json
 Place it here:
 
 ```text
-C:\Users\Hp\5 th Sem\EIOT\backend\models\best_model.keras
-C:\Users\Hp\5 th Sem\EIOT\backend\models\labels.json
+<project-root>\backend\models\best_model.keras
+<project-root>\backend\models\labels.json
 ```
 
 Accepted backup format:
@@ -189,7 +189,7 @@ backend/models/labels.json
 2. Activate backend virtual environment:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 ```
 
@@ -236,3 +236,5 @@ backend/models/best_model.keras
 ```
 
 And the backend already knows how to load it.
+
+

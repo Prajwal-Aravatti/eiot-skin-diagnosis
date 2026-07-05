@@ -32,7 +32,6 @@ The training teammate should provide:
 Also acceptable:
 
 - `skindisnet_efficientnetv2b3.keras`
-- `skindisnet_efficientnetv2b3.tflite` for future mobile/edge deployment
 
 Place it here:
 
@@ -114,3 +113,5 @@ preprocessing
 ```
 
 If these three are wrong, the app may run but predictions may be incorrect.
+
+

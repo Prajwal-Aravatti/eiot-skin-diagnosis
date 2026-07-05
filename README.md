@@ -1,273 +1,83 @@
-# Smart Remote Skin Disease Diagnosis
+# AI Skin Disease Screening
 
-EIOT project for remote skin disease screening with patient image upload, AI-based prediction, doctor review, and voice report support.
+An AI/ML computer-vision web application for preliminary skin-disease screening from a skin image. Patients can upload an image or capture one with a webcam, add basic symptoms, and submit the case to a FastAPI backend. The backend runs a trained TensorFlow/Keras image-classification model when available, stores the case in SQLite, and lets doctors review the prediction with notes.
 
-This repository contains the application source code. The trained Keras model file is large, so it is shared separately through Google Drive and must be placed inside the backend model folder before running real predictions.
+Its domain is medical AI / healthcare software, focused on image-based machine learning and a web interface for patient and doctor workflows.
 
-## Project Overview
+## Core Features
 
-This project allows:
+- React + Vite patient web interface
+- Skin-image upload and browser camera capture
+- FastAPI backend with authentication
+- TensorFlow/Keras model integration with fallback demo prediction
+- Six supported classes: Atopic Dermatitis, Contact Dermatitis, Eczema, Scabies, Seborrheic Dermatitis, and Tinea Corporis
+- Top-3 prediction probabilities, confidence score, risk level, and medicine guidance
+- Doctor dashboard for case review and notes
+- SQLite storage for users, cases, predictions, uploaded images, and doctor review status
+- Optional browser voice report for the generated screening summary
+- Optional Telegram bot for submitting phone-captured skin images to the same backend
 
-- Patients to create an account and log in.
-- Patients to upload a skin image with symptom details.
-- The backend to preprocess the image and run a TensorFlow/Keras model.
-- The app to show predicted disease, confidence, risk level, medicine guidance, and top-3 predictions.
-- The browser to read the report aloud using the Web Speech API.
-- Doctors to log in, view submitted patient cases, and add review notes.
-
-Important medical note:
-
-```text
-This is a screening and decision-support project, not a final medical diagnosis system.
-Final diagnosis and medicine/prescription must be approved by a doctor.
-```
-
-## Current Features
-
-- FastAPI backend
-- React + Vite frontend
-- SQLite local database
-- Patient login/signup
-- Doctor login/signup
-- Token-based authentication
-- Role-based route protection
-- Image upload storage
-- Laptop camera capture for patient images
-- TensorFlow/Keras model integration
-- Dummy prediction fallback if model is missing
-- Doctor dashboard
-- Doctor case review status and notes
-- Browser voice report
-- API documentation through Swagger UI
-
-## Tech Stack
-
-### Backend
-
-- Python
-- FastAPI
-- Uvicorn
-- SQLite
-- Pydantic
-- TensorFlow/Keras
-- NumPy
-- Pillow
-- python-multipart
-
-### Frontend
-
-- React
-- Vite
-- Lucide React icons
-- Browser Web Speech API
-
-## Repository Structure
+## Project Structure
 
 ```text
-EIOT/
-  README.md
-  architecture.png
-  EIOT_ppt_project.pptx
+backend/
+  app/
+    main.py                 FastAPI routes and application startup
+    database.py             SQLite schema and case/user helpers
+    schemas.py              Pydantic response/request models
+    services/
+      prediction.py         Keras model loading, preprocessing, prediction
+      recommendations.py    Risk level and guidance generation
+      auth.py               Password hashing and token generation
+      storage.py            Uploaded image storage
+  models/
+    README.md               Model placement instructions
+    labels.json             Optional label mapping
+    class_names.json        Class names used by the model
+  requirements.txt
 
-  backend/
-    requirements.txt
-    app/
-      main.py
-      config.py
-      database.py
-      schemas.py
-      services/
-        auth.py
-        prediction.py
-        recommendations.py
-        storage.py
-    models/
-      README.md
-      labels.json
-      class_names.json
-
-  frontend/
-    package.json
-    package-lock.json
-    index.html
-    src/
-      main.jsx
-      styles.css
-
-  docs/
-    complete_project_explanation_for_exam.md
-    model_contract.md
-    model_notebook_analysis_and_integration.md
-    stop_and_resume_guide.md
-    other step-by-step guides
+frontend/
+  src/
+    main.jsx                React application
+    styles.css              UI styling
+  package.json
 ```
 
-The following are intentionally not stored in GitHub:
+## Model
 
-```text
-backend/.venv/
-backend/data/*.db
-backend/uploads/
-backend/models/*.keras
-frontend/node_modules/
-frontend/dist/
-*.log
-*.zip
-```
-
-## Model File Setup
-
-The trained model file is not included in this GitHub repository because it is large.
-
-Download `best_model.keras` from Google Drive:
-
-```text
-PASTE_GOOGLE_DRIVE_MODEL_LINK_HERE
-```
-
-After downloading, place it here:
+Place the trained model in:
 
 ```text
 backend/models/best_model.keras
 ```
 
-Required model-related files:
+The backend also checks these fallback names:
 
 ```text
-backend/models/best_model.keras
-backend/models/labels.json
-backend/models/class_names.json
+backend/models/skindisnet_efficientnetv2b3.keras
+backend/models/skin_model.keras
+backend/models/skin_model.h5
 ```
 
-The backend automatically checks for the model file. If it is present and TensorFlow is installed, the app uses the real model and returns:
-
-```text
-model_status: real
-```
-
-If the model file is missing, the backend uses demo prediction fallback and returns:
-
-```text
-model_status: dummy
-```
-
-## AI Model Details
-
-Dataset:
-
-```text
-SkinDisNet
-```
-
-Model:
-
-```text
-EfficientNetV2B3
-```
-
-Input:
-
-```text
-300x300 RGB image
-```
-
-Classes:
-
-```text
-Atopic Dermatitis
-Contact Dermatitis
-Eczema
-Scabies
-Seborrheic Dermatitis
-Tinea Corporis
-```
-
-The class order in `labels.json` must match the model training order.
-
-## Setup On A New Laptop
-
-Install these first:
-
-- Python 3.11 or 3.12
-- Node.js LTS
-- Git
-- Chrome/Edge or another modern browser
-
-Check installation:
-
-```powershell
-python --version
-node --version
-npm --version
-git --version
-```
-
-## Clone The Repository
-
-```powershell
-git clone https://github.com/Prajwal-Aravatti/eiot-skin-diagnosis.git
-cd eiot-skin-diagnosis
-```
+If no model file is found, the backend returns a demo prediction so the web application can still be tested end to end.
 
 ## Backend Setup
 
-Go to the backend folder:
-
 ```powershell
 cd backend
-```
-
-Create a virtual environment:
-
-```powershell
-py -m venv .venv
-```
-
-If `py` does not work, use:
-
-```powershell
 python -m venv .venv
-```
-
-Activate the virtual environment:
-
-```powershell
 .\.venv\Scripts\Activate.ps1
-```
-
-If PowerShell blocks activation, run:
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-```
-
-Then activate again:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-Install backend packages:
-
-```powershell
 pip install -r requirements.txt
-```
-
-Start the backend:
-
-```powershell
 uvicorn app.main:app --reload
 ```
 
-Keep this PowerShell window open while using the app.
-
-Backend health check:
+Backend API:
 
 ```text
-http://127.0.0.1:8000/
+http://127.0.0.1:8000
 ```
 
-API documentation:
+API docs:
 
 ```text
 http://127.0.0.1:8000/docs
@@ -275,186 +85,82 @@ http://127.0.0.1:8000/docs
 
 ## Frontend Setup
 
-Open another PowerShell window from the project root:
+Open a second terminal:
 
 ```powershell
 cd frontend
+npm install
+npm run dev
 ```
 
-Install frontend packages:
-
-```powershell
-npm.cmd install
-```
-
-Build the frontend:
-
-```powershell
-npm.cmd run build
-```
-
-The build creates:
+Frontend app:
 
 ```text
-frontend/dist/
+http://localhost:5173
 ```
 
-FastAPI serves this built frontend at:
+## Build Frontend For FastAPI Serving
+
+```powershell
+cd frontend
+npm run build
+```
+
+Then start the backend and open:
 
 ```text
 http://127.0.0.1:8000/app
 ```
 
-## How To Run The App
+## Typical Workflow
 
-Start backend first:
-
-```powershell
-cd backend
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
-```
-
-Then open:
-
-```text
-http://127.0.0.1:8000/app
-```
-
-Only the backend server is required for normal use because the React frontend is served from `frontend/dist`.
-
-## Patient Flow
-
-1. Open the app.
-2. Create or log in to a patient account.
-3. Fill patient details.
-4. Upload a JPG/PNG skin image or capture one using the laptop camera.
-5. Submit the case.
-6. View disease prediction, confidence, risk level, medicine guidance, and top-3 predictions.
-7. Click `Play Voice Report` to hear the result.
-
-## Doctor Flow
-
-1. Create or log in to a doctor account.
-2. Open the Doctor Dashboard.
-3. Refresh submitted cases.
-4. View patient details, uploaded image, prediction, confidence, and guidance.
-5. Add doctor status and notes.
-6. Save the review.
+1. Create a patient account.
+2. Upload a JPG/PNG skin image or capture one using the camera panel.
+3. Enter age, gender, affected body location, itching/pain, and symptoms.
+4. Submit the case for AI screening.
+5. View predicted disease, confidence, top-3 predictions, risk level, guidance, and voice report.
+6. Create or log in as a doctor.
+7. Review submitted cases and save doctor notes/status.
 
 ## Main API Endpoints
 
 ```text
-GET  /
-GET  /app
 POST /auth/register
 POST /auth/login
-GET  /auth/me
 POST /auth/logout
+GET  /auth/me
 POST /predict
 GET  /cases
 GET  /my-cases
 GET  /cases/{case_id}
+POST /telegram/cases/{case_id}/link
 POST /cases/{case_id}/review
 ```
 
-Role protection:
+## Optional Telegram Mobile Image Submission
 
-```text
-POST /predict              patient only
-GET /my-cases              patient only
-GET /cases                 doctor only
-POST /cases/{id}/review    doctor only
-```
+The Telegram bot is a software helper for sending phone-captured skin images to the FastAPI backend. It uses the same patient login and `/predict` route as the website.
 
-## Troubleshooting
-
-### Frontend build not found
-
-Run:
+Set environment variables:
 
 ```powershell
-cd frontend
-npm.cmd install
-npm.cmd run build
+$env:TELEGRAM_BOT_TOKEN="PASTE_BOTFATHER_TOKEN_HERE"
+$env:SKIN_DIAGNOSIS_API_URL="http://127.0.0.1:8000"
 ```
 
-Then refresh:
-
-```text
-http://127.0.0.1:8000/app
-```
-
-### Prediction shows Demo prediction
-
-Check:
-
-```text
-backend/models/best_model.keras exists
-backend/models/labels.json exists
-TensorFlow installed successfully
-Backend restarted after adding model
-```
-
-Then submit a new case. Old saved cases may still show old model status.
-
-### Port 8000 already in use
-
-Stop the old backend PowerShell window with:
-
-```text
-Ctrl + C
-```
-
-Then restart:
+Start the bot:
 
 ```powershell
-uvicorn app.main:app --reload
+cd backend
+python telegram_camera_bot.py
 ```
 
-### npm command blocked on Windows
-
-Use:
-
-```powershell
-npm.cmd install
-npm.cmd run build
-```
-
-instead of:
-
-```powershell
-npm install
-npm run build
-```
-
-## Documentation
-
-For complete exam/viva explanation, read:
+Guide:
 
 ```text
-docs/complete_project_explanation_for_exam.md
+docs/step9_telegram_mobile_camera_bot_guide.md
 ```
 
-For model integration details, read:
+## Important Note
 
-```text
-docs/model_contract.md
-docs/model_notebook_analysis_and_integration.md
-```
-
-For restart instructions, read:
-
-```text
-docs/stop_and_resume_guide.md
-```
-
-For laptop camera capture details, read:
-
-```text
-docs/step8_laptop_camera_capture_guide.md
-```
-
-## One-Minute Explanation
-
-This is a remote skin disease screening web application. The frontend is built with React and Vite. The backend is built with FastAPI in Python. Patients can register, log in, upload a skin image, and enter symptoms. The backend saves the image, preprocesses it to 300x300 RGB, and sends it to a TensorFlow/Keras EfficientNetV2B3 model trained on six SkinDisNet classes. The result includes predicted disease, confidence, top-3 predictions, risk level, medicine guidance, and voice report text. The case is stored in SQLite. Doctors can log in separately, view submitted cases, inspect images and AI results, and save review notes. The system is designed as a doctor-supported screening tool, not a replacement for medical diagnosis.
+This application is a doctor-supported screening tool for academic/project use. It should not be treated as a replacement for a dermatologist or professional medical diagnosis.

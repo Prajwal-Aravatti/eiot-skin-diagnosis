@@ -84,7 +84,7 @@ It is a lightweight local database stored as a file.
 Current database file:
 
 ```text
-C:\Users\Hp\5 th Sem\EIOT\backend\data\eiot_cases.db
+<project-root>\backend\data\skin_diagnosis_cases.db
 ```
 
 We chose SQLite because:
@@ -125,7 +125,7 @@ npm.cmd run build
 The built frontend is stored in:
 
 ```text
-C:\Users\Hp\5 th Sem\EIOT\frontend\dist
+<project-root>\frontend\dist
 ```
 
 ### 7. Lucide React
@@ -135,9 +135,9 @@ Lucide React provides icons used in the frontend UI.
 ## Main Project File Structure
 
 ```text
-EIOT/
+project-root/
   architecture.png
-  EIOT_ppt_project.pptx
+  project_presentation.pptx
   README.md
 
   backend/
@@ -445,3 +445,5 @@ POST /cases/{case_id}/review
 ```
 
 It will show submitted patient cases and allow doctor review.
+
+

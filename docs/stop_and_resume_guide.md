@@ -1,6 +1,6 @@
 # Stop And Resume Guide
 
-Use this when stopping for the night and starting the EIOT project again later.
+Use this when stopping for the night and starting the AI skin diagnosis project again later.
 
 ## Current Project Status
 
@@ -23,8 +23,8 @@ Frontend rebuilt into frontend/dist
 The real model files are here:
 
 ```text
-C:\Users\Hp\5 th Sem\EIOT\backend\models\best_model.keras
-C:\Users\Hp\5 th Sem\EIOT\backend\models\labels.json
+<project-root>\backend\models\best_model.keras
+<project-root>\backend\models\labels.json
 ```
 
 The latest prediction test returned:
@@ -52,7 +52,7 @@ http://127.0.0.1:8000/docs
 There is no separate frontend server required because FastAPI serves the built React app from:
 
 ```text
-C:\Users\Hp\5 th Sem\EIOT\frontend\dist
+<project-root>\frontend\dist
 ```
 
 ## How To Stop Tonight
@@ -93,13 +93,13 @@ Open PowerShell and run:
 Get-Process uvicorn, python -ErrorAction SilentlyContinue
 ```
 
-If you want to stop only the EIOT backend processes, run:
+If you want to stop only the AI skin diagnosis backend processes, run:
 
 ```powershell
 Get-CimInstance Win32_Process |
   Where-Object {
-    $_.CommandLine -like '*EIOT*backend*uvicorn*' -or
-    $_.CommandLine -like '*EIOT*backend*app.main*'
+    $_.CommandLine -like '*backend*uvicorn*' -or
+    $_.CommandLine -like '*backend*app.main*'
   } |
   ForEach-Object {
     Stop-Process -Id $_.ProcessId -Force
@@ -122,7 +122,7 @@ Open PowerShell.
 Go to the backend folder:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 ```
 
 Activate the virtual environment:
@@ -165,7 +165,7 @@ Expected response:
 
 ```json
 {
-  "message": "EIOT Skin Diagnosis API is running",
+  "message": "AI Skin Diagnosis API is running",
   "docs": "/docs"
 }
 ```
@@ -214,7 +214,7 @@ Save doctor notes
 First confirm TensorFlow is installed:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 python -m pip show tensorflow
 ```
@@ -258,8 +258,8 @@ Run:
 ```powershell
 Get-CimInstance Win32_Process |
   Where-Object {
-    $_.CommandLine -like '*EIOT*backend*uvicorn*' -or
-    $_.CommandLine -like '*EIOT*backend*app.main*'
+    $_.CommandLine -like '*backend*uvicorn*' -or
+    $_.CommandLine -like '*backend*app.main*'
   } |
   Select-Object ProcessId, Name, CommandLine
 ```
@@ -273,7 +273,7 @@ Stop-Process -Id PROCESS_ID_HERE -Force
 Start again:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
@@ -289,7 +289,7 @@ frontend/src
 rebuild:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\frontend"
+cd "<project-root>\frontend"
 npm.cmd run build
 ```
 
@@ -304,7 +304,7 @@ http://127.0.0.1:8000/app
 Most days, this is all you need:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
@@ -314,4 +314,6 @@ Then open:
 ```text
 http://127.0.0.1:8000/app
 ```
+
+
 

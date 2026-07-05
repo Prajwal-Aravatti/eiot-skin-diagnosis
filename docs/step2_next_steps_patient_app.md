@@ -100,7 +100,7 @@ Both commands should show version numbers.
 The project will look like this:
 
 ```text
-EIOT/
+project-root/
   backend/
     app/
     requirements.txt
@@ -224,4 +224,6 @@ Backend saves case
 Frontend displays prediction result
 GET /cases shows the same case
 ```
+
+
 

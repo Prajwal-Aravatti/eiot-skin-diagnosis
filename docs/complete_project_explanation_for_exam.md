@@ -1,6 +1,6 @@
 # Smart Remote Skin Disease Diagnosis - Complete Project Explanation For Exam
 
-This document explains the full EIOT project from the beginning to the current working version. It is written for teammates who are seeing the project for the first time, so it explains the purpose, technologies, file structure, code flow, setup process, and likely viva/examiner questions.
+This document explains the full AI skin diagnosis project from the beginning to the current working version. It is written for teammates who are seeing the project for the first time, so it explains the purpose, technologies, file structure, code flow, setup process, and likely viva/examiner questions.
 
 Project name:
 
@@ -354,16 +354,16 @@ No extra Python package or internet API is required for the current voice featur
 Main folder:
 
 ```text
-EIOT/
+project-root/
 ```
 
 Important files and folders:
 
 ```text
-EIOT/
+project-root/
   README.md
   architecture.png
-  EIOT_ppt_project.pptx
+  project_presentation.pptx
 
   backend/
     requirements.txt
@@ -415,8 +415,8 @@ EIOT/
     stop_and_resume_guide.md
     complete_project_explanation_for_exam.md
 
-  model files temporary/
-    EIOT(MODEL).ipynb
+  model_training/
+    skin_disease_model.ipynb
 ```
 
 Generated/vendor folders:
@@ -471,7 +471,7 @@ Use in viva:
 Explain the system using this architecture diagram from left to right.
 ```
 
-### 4.3 EIOT_ppt_project.pptx
+### 4.3 project_presentation.pptx
 
 Purpose:
 
@@ -1199,7 +1199,7 @@ user details
 Where session is saved:
 
 ```text
-browser localStorage under key eiot_session
+browser localStorage under key skin_diagnosis_session
 ```
 
 Patient submit flow inside frontend:
@@ -1334,7 +1334,7 @@ model_notebook_analysis_and_integration.md -> training notebook summary
 stop_and_resume_guide.md -> how to start/stop project
 ```
 
-### 4.28 model files temporary/EIOT(MODEL).ipynb
+### 4.28 model_training/skin_disease_model.ipynb
 
 Purpose:
 
@@ -1503,7 +1503,7 @@ Returns:
 
 ```json
 {
-  "message": "EIOT Skin Diagnosis API is running",
+  "message": "AI Skin Diagnosis API is running",
   "docs": "/docs"
 }
 ```
@@ -1981,8 +1981,8 @@ frontend/
 docs/
 README.md
 architecture.png
-EIOT_ppt_project.pptx
-model files temporary/EIOT(MODEL).ipynb if needed
+project_presentation.pptx
+model_training/skin_disease_model.ipynb if needed
 ```
 
 Usually do not send:
@@ -2006,7 +2006,7 @@ If you want the real model to work on their laptop, include backend/models/best_
 Open PowerShell in backend folder:
 
 ```powershell
-cd "C:\path\to\EIOT\backend"
+cd "<project-root>\backend"
 ```
 
 Create virtual environment:
@@ -2070,7 +2070,7 @@ http://127.0.0.1:8000/docs
 Open another PowerShell:
 
 ```powershell
-cd "C:\path\to\EIOT\frontend"
+cd "<project-root>\frontend"
 ```
 
 Install frontend packages:
@@ -2151,7 +2151,7 @@ Do not judge by old cases saved before model integration.
 Run backend:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
@@ -2519,7 +2519,7 @@ The frontend stores the login session token and user details in localStorage so 
 Answer:
 
 ```text
-Deploy online, add HTTPS, token expiry, admin approval for doctors, better dataset, Grad-CAM explainability, mobile app, IoT camera capture, SMS/email alerts, cloud database, and dermatologist feedback loop.
+Deploy online, add HTTPS, token expiry, admin approval for doctors, better dataset, Grad-CAM explainability, mobile app, mobile camera capture, SMS/email alerts, cloud database, and dermatologist feedback loop.
 ```
 
 ## 14. Troubleshooting
@@ -2529,7 +2529,7 @@ Deploy online, add HTTPS, token expiry, admin approval for doctors, better datas
 Check:
 
 ```powershell
-cd "C:\path\to\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 uvicorn app.main:app --reload
@@ -2540,7 +2540,7 @@ uvicorn app.main:app --reload
 Run:
 
 ```powershell
-cd "C:\path\to\EIOT\frontend"
+cd "<project-root>\frontend"
 npm.cmd install
 npm.cmd run build
 ```
@@ -2690,4 +2690,6 @@ Use this if examiner asks for a quick explanation:
 ```text
 This is a remote skin disease screening web application. The frontend is built with React and Vite. The backend is built with FastAPI in Python. Patients can register, log in, upload a skin image, and enter symptoms. The backend saves the image, preprocesses it to 300x300 RGB, and sends it to a TensorFlow/Keras EfficientNetV2B3 model trained on six SkinDisNet classes. The result includes predicted disease, confidence, top-3 predictions, risk level, medicine guidance, and voice report text. The case is stored in a SQLite database. Doctors can log in separately, view all submitted cases, inspect images and AI results, and save review notes. The system is designed as a doctor-supported screening tool, not a replacement for medical diagnosis.
 ```
+
+
 

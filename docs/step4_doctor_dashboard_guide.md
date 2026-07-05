@@ -1,6 +1,6 @@
 # Step 4 Guide: Doctor Dashboard
 
-This step adds the doctor-in-the-loop part of the EIOT architecture.
+This step adds the doctor-in-the-loop part of the application architecture.
 
 The doctor dashboard lets a doctor view patient submissions, inspect the uploaded image and AI screening result, then add review status and notes.
 
@@ -102,7 +102,7 @@ mobile responsive layout
 1. Start backend:
 
 ```powershell
-cd "C:\Users\Hp\5 th Sem\EIOT\backend"
+cd "<project-root>\backend"
 .\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
@@ -197,4 +197,6 @@ prediction and risk are visible
 doctor can save status and notes
 GET /cases shows updated doctor review
 ```
+
+
 
